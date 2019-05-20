@@ -34,7 +34,7 @@ public class Schedule {
     private BitSet daysOf5Weeks;
 
     public static Schedule create(String expression) throws InvalidExpressionException {
-        if (expression.isEmpty() || expression.isBlank()) {
+        if (expression.isEmpty()) {
             throw new InvalidExpressionException("empty expression");
         }
         String[] fields = expression.trim().toLowerCase().split("\\s+");
