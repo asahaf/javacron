@@ -71,7 +71,7 @@ public class App {
             Schedule schedule3 = Schedule.create("0 0 1,5,23 * * *");
             System.out.println(dateFormatter.format(schedule3.next(baseDate))); // 2019-01-01 05:00:00
 
-            // at 00:00:00 on 29th or Feb if it's on every 4th day-of-week.
+            // at 00:00:00 on 29th of Feb if it's on every 4th day-of-week.
             Schedule schedule4 = Schedule.create("0 0 0 29 2 */4");
             System.out.println(dateFormatter.format(schedule4.next(baseDate))); // 2024-02-29 00:00:00
 
