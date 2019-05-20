@@ -1,0 +1,6 @@
+# Config file for automatic testing at travis-ci.org
+
+language: java
+
+# command to run tests
+script: ./mvnw clean test
