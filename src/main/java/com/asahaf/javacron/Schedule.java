@@ -6,6 +6,16 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Schedule class represents a parsed crontab expression.
+ *
+ * <p>
+ * The schedule class cannot be instantiated using a constructor, a Schedule
+ * object can be obtain by using the static {@link create} method, which parses
+ * a crontab expression and creates a Schedule object.
+ *
+ * @author Ahmed AlSahaf
+ */
 public class Schedule {
 
     private enum DaysAndDaysOfWeekRelation {
@@ -33,6 +43,53 @@ public class Schedule {
     private BitSet daysOfWeek;
     private BitSet daysOf5Weeks;
 
+    /**
+     * Parses crontab expression and create a Schedule object representing that
+     * expression.
+     *
+     * The expression string can be 5 fields expression for minutes resolution.
+     *
+     * <pre>
+     *  ┌───────────── minute (0 - 59)
+     *  │ ┌───────────── hour (0 - 23)
+     *  │ │ ┌───────────── day of the month (1 - 31)
+     *  │ │ │ ┌───────────── month (1 - 12 or Jan/January - Dec/December)
+     *  │ │ │ │ ┌───────────── day of the week (0 - 6 or Sun/Sunday - Sat/Saturday)
+     *  │ │ │ │ │
+     *  │ │ │ │ │
+     *  │ │ │ │ │
+     * "* * * * *"
+     * </pre>
+     *
+     * or 6 fields expression for higher, seconds resolution.
+     *
+     * <pre>
+     *  ┌───────────── second (0 - 59)
+     *  │ ┌───────────── minute (0 - 59)
+     *  │ │ ┌───────────── hour (0 - 23)
+     *  │ │ │ ┌───────────── day of the month (1 - 31)
+     *  │ │ │ │ ┌───────────── month (1 - 12 or Jan/January - Dec/December)
+     *  │ │ │ │ │ ┌───────────── day of the week (0 - 6 or Sun/Sunday - Sat/Saturday)
+     *  │ │ │ │ │ │
+     *  │ │ │ │ │ │
+     *  │ │ │ │ │ │
+     * "* * * * * *"
+     * </pre>
+     *
+     * @param expression a crontab expression string used to create Schedule.
+     * @return Schedule object created based on the supplied crontab expression.
+     * @throws InvalidExpressionException if the provided crontab expression is
+     *                                    invalid. The crontab expression is
+     *                                    considered invalid if it is not properly
+     *                                    formed, like empty string or contains less
+     *                                    than 5 fields or more than 6 field. It's
+     *                                    also invalid if the values in a field are
+     *                                    beyond the allowed values range of that
+     *                                    field. Non-occurring schedules like "0 0
+     *                                    30 2 *" is considered invalid too, as Feb
+     *                                    never has 30 days and a schedule like this
+     *                                    never occurs.
+     */
     public static Schedule create(String expression) throws InvalidExpressionException {
         if (expression.isEmpty()) {
             throw new InvalidExpressionException("empty expression");
@@ -41,7 +98,7 @@ public class Schedule {
         int count = fields.length;
         if (count > 6 || count < 5) {
             throw new InvalidExpressionException(
-                    "cron expression should have 6 fields for (seconds resolution) or 5 fields for (minutes resolution)");
+                    "crontab expression should have 6 fields for (seconds resolution) or 5 fields for (minutes resolution)");
         }
         Schedule schedule = new Schedule();
         schedule.hasSecondsField = count == 6;
@@ -87,86 +144,21 @@ public class Schedule {
         return schedule;
     }
 
-    public static boolean isLeapYear(int year) {
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.YEAR, year);
-        return cal.getActualMaximum(Calendar.DAY_OF_YEAR) > 365;
-    }
-
-    public int getNumberOfFields() {
-        return hasSecondsField ? 6 : 5;
-    }
-
-    public String getExpression() {
-        return expression;
-    }
-
-    private boolean canScheduleActuallyOccur() {
-        if (this.daysAndDaysOfWeekRelation == DaysAndDaysOfWeekRelation.UNION || this.days.nextSetBit(0) < 29)
-            return true;
-
-        int aYear = new Date().getYear();
-        for (int dayIndex = 29; dayIndex < 31; dayIndex++) {
-            if (!this.days.get(dayIndex))
-                continue;
-
-            for (int monthIndex = 0; monthIndex < 12; monthIndex++) {
-                if (!this.months.get(monthIndex))
-                    continue;
-
-                if (dayIndex + 1 <= YearMonth.of(aYear, monthIndex + 1).lengthOfMonth())
-                    return true;
-            }
-        }
-        return false;
-    }
-
-    private static BitSet generateDaysOf5Weeks(BitSet daysOfWeek) {
-        int weekLength = 7;
-        int setLength = weekLength + 31;
-        BitSet bitSet = new BitSet(setLength);
-        for (int i = 0; i < setLength; i += weekLength) {
-            for (int j = 0; j < weekLength; j++) {
-                bitSet.set(j + i, daysOfWeek.get(j));
-            }
-        }
-        return bitSet;
-    }
-
-    private BitSet getUpdatedDays(int year, int month) {
-        Date date = new Date(year, month, 1);
-        int daysOf5WeeksOffset = date.getDay();
-        BitSet updatedDays = new BitSet(31);
-        updatedDays.or(this.days);
-        BitSet monthDaysOfWeeks = this.daysOf5Weeks.get(daysOf5WeeksOffset, daysOf5WeeksOffset + 31);
-        if (this.daysAndDaysOfWeekRelation == DaysAndDaysOfWeekRelation.INTERSECT) {
-            updatedDays.and(monthDaysOfWeeks);
-        } else {
-            updatedDays.or(monthDaysOfWeeks);
-        }
-        int i;
-        if (month == 1 /* Feb */) {
-            i = 28;
-            if (isLeapYear(year)) {
-                i++;
-            }
-        } else {
-            // We cannot use lengthOfMonth method with the month Feb
-            // because it returns incorrect number of days for years
-            // that are dividable by 400 like the year 2000, a bug??
-            i = YearMonth.of(year, month + 1).lengthOfMonth();
-        }
-        // remove days beyond month length
-        for (; i < 31; i++) {
-            updatedDays.set(i, false);
-        }
-        return updatedDays;
-    }
-
+    /**
+     * Calculates the next occurrence based on the current time.
+     *
+     * @return Date object of the next occurrence.
+     */
     public Date next() {
         return this.next(new Date());
     }
 
+    /**
+     * Calculates the next occurrence based on provided base time.
+     *
+     * @param baseDate Date object based on which calculating the next occurrence.
+     * @return Date object of the next occurrence.
+     */
     public Date next(Date baseDate) {
         int baseSecond = baseDate.getSeconds();
         int baseMinute = baseDate.getMinutes();
@@ -250,6 +242,12 @@ public class Schedule {
         }
     }
 
+    /**
+     * Calculates the next N occurrences based on current time.
+     *
+     * @param count number of next occurrences to calculate.
+     * @return Array of Date objects of the next N occurrences.
+     */
     public Date[] next(int count) {
         Date[] dates = new Date[count];
         Date baseDate = new Date();
@@ -260,6 +258,13 @@ public class Schedule {
         return dates;
     }
 
+    /**
+     * Calculates the next N occurrences based on provided base time.
+     *
+     * @param baseDate Date object based on which calculating the next occurrence.
+     * @param count    number of next occurrences to calculate.
+     * @return Array of Date objects of the next N occurrences.
+     */
     public Date[] next(Date baseDate, int count) {
         Date[] dates = new Date[count];
         for (int i = 0; i < dates.length; i++) {
@@ -269,14 +274,107 @@ public class Schedule {
         return dates;
     }
 
+    /**
+     * Calculates the number of time units from the current time to the next
+     * occurrence.
+     *
+     * @param timeUnit time unit in which the returned value should be.
+     * @return number of time units from the current time to the next occurrence.
+     */
     public long nextDuration(TimeUnit timeUnit) {
         Date baseDate = new Date();
         long diff = this.next(baseDate).getTime() - baseDate.getTime();
         return timeUnit.convert(diff, TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * Calculates the number of time units from the provided base time to the next
+     * occurrence.
+     *
+     * @param baseDate Date object based on which calculating the next occurrence.
+     * @param timeUnit time unit in which the returned value should be.
+     * @return number of time units from the provided base time to the next
+     *         occurrence.
+     */
     public long nextDuration(Date baseDate, TimeUnit timeUnit) {
         long diff = this.next(baseDate).getTime() - baseDate.getTime();
         return timeUnit.convert(diff, TimeUnit.MILLISECONDS);
     }
+
+    public static boolean isLeapYear(int year) {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.YEAR, year);
+        return cal.getActualMaximum(Calendar.DAY_OF_YEAR) > 365;
+    }
+
+    public int getNumberOfFields() {
+        return hasSecondsField ? 6 : 5;
+    }
+
+    public String getExpression() {
+        return expression;
+    }
+
+    private boolean canScheduleActuallyOccur() {
+        if (this.daysAndDaysOfWeekRelation == DaysAndDaysOfWeekRelation.UNION || this.days.nextSetBit(0) < 29)
+            return true;
+
+        int aYear = new Date().getYear();
+        for (int dayIndex = 29; dayIndex < 31; dayIndex++) {
+            if (!this.days.get(dayIndex))
+                continue;
+
+            for (int monthIndex = 0; monthIndex < 12; monthIndex++) {
+                if (!this.months.get(monthIndex))
+                    continue;
+
+                if (dayIndex + 1 <= YearMonth.of(aYear, monthIndex + 1).lengthOfMonth())
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    private static BitSet generateDaysOf5Weeks(BitSet daysOfWeek) {
+        int weekLength = 7;
+        int setLength = weekLength + 31;
+        BitSet bitSet = new BitSet(setLength);
+        for (int i = 0; i < setLength; i += weekLength) {
+            for (int j = 0; j < weekLength; j++) {
+                bitSet.set(j + i, daysOfWeek.get(j));
+            }
+        }
+        return bitSet;
+    }
+
+    private BitSet getUpdatedDays(int year, int month) {
+        Date date = new Date(year, month, 1);
+        int daysOf5WeeksOffset = date.getDay();
+        BitSet updatedDays = new BitSet(31);
+        updatedDays.or(this.days);
+        BitSet monthDaysOfWeeks = this.daysOf5Weeks.get(daysOf5WeeksOffset, daysOf5WeeksOffset + 31);
+        if (this.daysAndDaysOfWeekRelation == DaysAndDaysOfWeekRelation.INTERSECT) {
+            updatedDays.and(monthDaysOfWeeks);
+        } else {
+            updatedDays.or(monthDaysOfWeeks);
+        }
+        int i;
+        if (month == 1 /* Feb */) {
+            i = 28;
+            if (isLeapYear(year)) {
+                i++;
+            }
+        } else {
+            // We cannot use lengthOfMonth method with the month Feb
+            // because it returns incorrect number of days for years
+            // that are dividable by 400 like the year 2000, a bug??
+            i = YearMonth.of(year, month + 1).lengthOfMonth();
+        }
+        // remove days beyond month length
+        for (; i < 31; i++) {
+            updatedDays.set(i, false);
+        }
+        return updatedDays;
+    }
+
 }
