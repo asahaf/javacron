@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/asahaf/javacron.svg?branch=master)](https://travis-ci.org/asahaf/javacron)
+[![Build Status](https://travis-ci.org/asahaf/javacron.svg?branch=master)](https://travis-ci.org/asahaf/javacron) [![Maven Central](https://maven-badges-generator.herokuapp.com/maven-central/com.asahaf.javacron/javacron/badge.svg?color=green&style=flat)](https://maven-badges-generator.herokuapp.com/maven-central/com.asahaf.javacron/javacron)
 
 JavaCron
 ============
