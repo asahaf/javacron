@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/asahaf/javacron.svg?branch=master)](https://travis-ci.org/asahaf/javacron) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.asahaf.javacron/javacron/badge.svg?color=green&style=flat)](https://maven-badges.herokuapp.com/maven-central/com.asahaf.javacron/javacron)
+[![Build Status](https://travis-ci.org/asahaf/javacron.svg?branch=master)](https://travis-ci.org/asahaf/javacron) [![Maven Central](https://img.shields.io/maven-central/v/com.asahaf.javacron/javacron.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.asahaf.javacron%22%20AND%20a:%22javacron%22)
 
 JavaCron
 ============
