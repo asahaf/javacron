@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Ahmed AlSahaf
  */
-public class Schedule {
+public class Schedule implements Comparable<Schedule> {
 
     private enum DaysAndDaysOfWeekRelation {
         INTERSECT, UNION
@@ -301,6 +301,31 @@ public class Schedule {
         return timeUnit.convert(diff, TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * Compare two {@code Schedule} objects based on next occurrence.
+     *
+     * The next occurrences are calculated based on the current time.
+     *
+     * @para anotherSchedule the {@code Schedule} to be compared.
+     * @return the value {@code 0} if this {@code Schedule} next occurrence is equal
+     *         to the argument {@code Schedule} next occurrence; a value less than
+     *         {@code 0} if this {@code Schedule} next occurrence is before the
+     *         argument {@code Schedule} next occurrence; and a value greater than
+     *         {@code 0} if this {@code Schedule} next occurrence is after the
+     *         argument {@code Schedule} next occurrence.
+     */
+    @Override
+    public int compareTo(Schedule anotherSchedule) {
+        if (anotherSchedule == this) {
+            return 0;
+        }
+
+        Date baseDate = new Date();
+        Long anotherDuration = Long.valueOf(anotherSchedule.nextDuration(baseDate, TimeUnit.SECONDS));
+        Long thisDuration = Long.valueOf(this.nextDuration(baseDate, TimeUnit.SECONDS));
+        return thisDuration.compareTo(anotherDuration);
+    }
+
     public static boolean isLeapYear(int year) {
         Calendar cal = Calendar.getInstance();
         cal.set(Calendar.YEAR, year);
@@ -376,5 +401,4 @@ public class Schedule {
         }
         return updatedDays;
     }
-
 }
