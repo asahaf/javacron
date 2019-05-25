@@ -306,7 +306,7 @@ public class Schedule implements Comparable<Schedule> {
      *
      * The next occurrences are calculated based on the current time.
      *
-     * @para anotherSchedule the {@code Schedule} to be compared.
+     * @param anotherSchedule the {@code Schedule} to be compared.
      * @return the value {@code 0} if this {@code Schedule} next occurrence is equal
      *         to the argument {@code Schedule} next occurrence; a value less than
      *         {@code 0} if this {@code Schedule} next occurrence is before the
