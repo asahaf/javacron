@@ -326,6 +326,31 @@ public class Schedule implements Comparable<Schedule> {
         return thisDuration.compareTo(anotherDuration);
     }
 
+    /**
+     * Compares this object against the specified object. The result is {@code true}
+     * if and only if the argument is not {@code null} and is a {@code Schedule}
+     * object that whose seconds, minutes, hours, days, months, and days of
+     * weeks sets are equal to those of this schedule.
+     * 
+     * The expression string used to create the schedule is not considered, as two
+     * different expressions may produce same schedules.
+     *
+     * @param obj the object to compare with
+     * @return {@code true} if the objects are the same; {@code false} otherwise
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Schedule))
+            return false;
+        if (this == obj)
+            return true;
+
+        Schedule schedule = (Schedule) obj;
+        return this.seconds.equals(schedule.seconds) && this.minutes.equals(schedule.minutes)
+                && this.hours.equals(schedule.hours) && this.days.equals(schedule.days)
+                && this.months.equals(schedule.months) && this.daysOfWeek.equals(schedule.daysOfWeek);
+    }
+
     public static boolean isLeapYear(int year) {
         Calendar cal = Calendar.getInstance();
         cal.set(Calendar.YEAR, year);
