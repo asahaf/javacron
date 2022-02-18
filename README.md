@@ -3,7 +3,7 @@
 JavaCron
 ============
 
-JavaCron is a java library which provides functionality for parsing crontab expression 
+JavaCron is a java library which provides functionality for parsing crontab expression
 and calculating the next run, based on current or specified date time.
 
 ## Features
@@ -22,7 +22,7 @@ next run(s).
 │ │ ┌───────────── day of the month (1 - 31)
 │ │ │ ┌───────────── month (1 - 12 or Jan/January - Dec/December)
 │ │ │ │ ┌───────────── day of the week (0 - 6 or Sun/Sunday - Sat/Saturday)
-│ │ │ │ │                                   
+│ │ │ │ │
 │ │ │ │ │
 │ │ │ │ │
 * * * * *
@@ -36,7 +36,7 @@ next run(s).
 │ │ │ ┌───────────── day of the month (1 - 31)
 │ │ │ │ ┌───────────── month (1 - 12 or Jan/January - Dec/December)
 │ │ │ │ │ ┌───────────── day of the week (0 - 6 or Sun/Sunday - Sat/Saturday)
-│ │ │ │ │ │                                   
+│ │ │ │ │ │
 │ │ │ │ │ │
 │ │ │ │ │ │
 * * * * * *
@@ -74,6 +74,10 @@ public class App {
             // at 00:00:00 on 29th of Feb if it's on every 4th day-of-week.
             Schedule schedule4 = Schedule.create("0 0 0 29 2 */4");
             System.out.println(dateFormatter.format(schedule4.next(baseDate))); // 2024-02-29 00:00:00
+
+            // at 00:00:00 last Friday in Jan
+            Schedule schedule5 = Schedule.create("0 0 0 * * 5L");
+            System.out.println(dateFormatter.format(schedule5.next(baseDate))); // 2019-01-25 00:00:00
 
             // Calculating the next 5 runs
             Date[] nextRuns = schedule3.next(baseDate, 5);

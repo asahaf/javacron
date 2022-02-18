@@ -42,6 +42,7 @@ public class Schedule implements Comparable<Schedule> {
     private BitSet months;
     private BitSet daysOfWeek;
     private BitSet daysOf5Weeks;
+    private boolean isSpecificLastDayOfMonth;
 
     /**
      * Parses crontab expression and create a Schedule object representing that
@@ -117,10 +118,10 @@ public class Schedule implements Comparable<Schedule> {
         token = fields[index++];
         schedule.hours = Schedule.HOURS_FIELD_PARSER.parse(token);
 
-        token = fields[index++];
-        schedule.days = Schedule.DAYS_FIELD_PARSER.parse(token);
+        String daysToken = fields[index++];
+        schedule.days = Schedule.DAYS_FIELD_PARSER.parse(daysToken);
         boolean daysStartWithAsterisk = false;
-        if (token.startsWith("*"))
+        if (daysToken.startsWith("*"))
             daysStartWithAsterisk = true;
 
         token = fields[index++];
@@ -131,6 +132,16 @@ public class Schedule implements Comparable<Schedule> {
         boolean daysOfWeekStartAsterisk = false;
         if (token.startsWith("*"))
             daysOfWeekStartAsterisk = true;
+
+        if (token.length() == 2 && token.endsWith("l")) {
+            if (!daysToken.equalsIgnoreCase("*")) {
+                throw new InvalidExpressionException(
+                        "when last days of month is specified. the day of the month must be \"*\"");
+            }
+            // this flag will be used later duing finding the next schedual
+            // this is because some months has less than 31 days
+            schedule.isSpecificLastDayOfMonth = true;
+        }
         schedule.daysOf5Weeks = generateDaysOf5Weeks(schedule.daysOfWeek);
 
         schedule.daysAndDaysOfWeekRelation = (daysStartWithAsterisk || daysOfWeekStartAsterisk)
@@ -223,7 +234,7 @@ public class Schedule implements Comparable<Schedule> {
                 day = 1;
             }
             month = candidateMonth;
-            BitSet adjustedDaysSet = getUpdatedDays(year, month);
+            BitSet adjustedDaysSet = getUpdatedDays(this, year, month);
             candidateDay = adjustedDaysSet.nextSetBit(day - 1) + 1;
             if (candidateDay < 1) {
                 month++;
@@ -331,7 +342,7 @@ public class Schedule implements Comparable<Schedule> {
      * if and only if the argument is not {@code null} and is a {@code Schedule}
      * object that whose seconds, minutes, hours, days, months, and days of
      * weeks sets are equal to those of this schedule.
-     * 
+     *
      * The expression string used to create the schedule is not considered, as two
      * different expressions may produce same schedules.
      *
@@ -397,32 +408,40 @@ public class Schedule implements Comparable<Schedule> {
         return bitSet;
     }
 
-    private BitSet getUpdatedDays(int year, int month) {
+    private BitSet getUpdatedDays(Schedule schedule, int year, int month) {
         Date date = new Date(year, month, 1);
         int daysOf5WeeksOffset = date.getDay();
         BitSet updatedDays = new BitSet(31);
         updatedDays.or(this.days);
         BitSet monthDaysOfWeeks = this.daysOf5Weeks.get(daysOf5WeeksOffset, daysOf5WeeksOffset + 31);
-        if (this.daysAndDaysOfWeekRelation == DaysAndDaysOfWeekRelation.INTERSECT) {
+        if (schedule.isSpecificLastDayOfMonth
+                || this.daysAndDaysOfWeekRelation == DaysAndDaysOfWeekRelation.INTERSECT) {
             updatedDays.and(monthDaysOfWeeks);
         } else {
             updatedDays.or(monthDaysOfWeeks);
         }
-        int i;
+        int monthDaysCount;
         if (month == 1 /* Feb */) {
-            i = 28;
+            monthDaysCount = 28;
             if (isLeapYear(year)) {
-                i++;
+                monthDaysCount++;
             }
         } else {
             // We cannot use lengthOfMonth method with the month Feb
             // because it returns incorrect number of days for years
             // that are dividable by 400 like the year 2000, a bug??
-            i = YearMonth.of(year, month + 1).lengthOfMonth();
+            monthDaysCount = YearMonth.of(year, month + 1).lengthOfMonth();
         }
         // remove days beyond month length
-        for (; i < 31; i++) {
-            updatedDays.set(i, false);
+        for (int j = monthDaysCount; j < 31; j++) {
+            updatedDays.set(j, false);
+        }
+
+        // remove days before the last 7 days
+        if (schedule.isSpecificLastDayOfMonth) {
+            for (int j = 0; j < monthDaysCount - 7; j++) {
+                updatedDays.set(j, false);
+            }
         }
         return updatedDays;
     }
