@@ -62,39 +62,39 @@ class CronFieldParser {
     CronFieldParser(CronFieldType fieldType) {
         this.fieldType = fieldType;
         switch (fieldType) {
-        case SECOND:
-        case MINUTE:
-            this.fieldName = this.fieldType.toString().toLowerCase();
-            this.length = 60;
-            this.maxAllowedValue = 59;
-            this.minAllowedValue = 0;
-            break;
-        case HOUR:
-            this.fieldName = this.fieldType.toString().toLowerCase();
-            this.length = 24;
-            this.maxAllowedValue = 23;
-            this.minAllowedValue = 0;
-            break;
-        case DAY:
-            this.fieldName = this.fieldType.toString().toLowerCase();
-            this.length = 31;
-            this.maxAllowedValue = 31;
-            this.minAllowedValue = 1;
-            break;
-        case MONTH:
-            this.choices = CronFieldParser.MONTHS_NAMES;
-            this.fieldName = this.fieldType.toString().toLowerCase();
-            this.length = 12;
-            this.maxAllowedValue = 12;
-            this.minAllowedValue = 1;
-            break;
-        case DAY_OF_WEEK:
-            this.choices = CronFieldParser.DAYS_OF_WEEK_NAMES;
-            this.fieldName = "day of week";
-            this.length = 7;
-            this.maxAllowedValue = 6;
-            this.minAllowedValue = 0;
-            break;
+            case SECOND:
+            case MINUTE:
+                this.fieldName = this.fieldType.toString().toLowerCase();
+                this.length = 60;
+                this.maxAllowedValue = 59;
+                this.minAllowedValue = 0;
+                break;
+            case HOUR:
+                this.fieldName = this.fieldType.toString().toLowerCase();
+                this.length = 24;
+                this.maxAllowedValue = 23;
+                this.minAllowedValue = 0;
+                break;
+            case DAY:
+                this.fieldName = this.fieldType.toString().toLowerCase();
+                this.length = 31;
+                this.maxAllowedValue = 31;
+                this.minAllowedValue = 1;
+                break;
+            case MONTH:
+                this.choices = CronFieldParser.MONTHS_NAMES;
+                this.fieldName = this.fieldType.toString().toLowerCase();
+                this.length = 12;
+                this.maxAllowedValue = 12;
+                this.minAllowedValue = 1;
+                break;
+            case DAY_OF_WEEK:
+                this.choices = CronFieldParser.DAYS_OF_WEEK_NAMES;
+                this.fieldName = "day of week";
+                this.length = 7;
+                this.maxAllowedValue = 6;
+                this.minAllowedValue = 0;
+                break;
         }
     }
 
@@ -145,6 +145,12 @@ class CronFieldParser {
     }
 
     public BitSet parse(String token) throws InvalidExpressionException {
+        // This is when last day of the month is specified
+        if (this.fieldType == CronFieldType.DAY_OF_WEEK) {
+            if (token.length() == 2 && token.endsWith("l")) {
+                return this.parseLiteral(token.substring(0, 1));
+            }
+        }
         if (token.indexOf(",") > -1) {
             BitSet bitSet = new BitSet(this.length);
             String[] items = token.split(",");
