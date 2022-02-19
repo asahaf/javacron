@@ -136,7 +136,10 @@ public class Schedule implements Comparable<Schedule> {
             daysOfWeekStartAsterisk = true;
 
         if (token.length() == 2 && token.endsWith("l")) {
-            if (!daysToken.equalsIgnoreCase("*")) {
+            if(schedule.isLastDayOfMonth) {
+                throw new InvalidExpressionException(
+                        "You can only specify the last day of month week in either the DAY field or in the DAY_OF_WEEK field, not both.");
+            } else if (!daysToken.equalsIgnoreCase("*")) {
                 throw new InvalidExpressionException(
                         "when last days of month is specified. the day of the month must be \"*\"");
             }

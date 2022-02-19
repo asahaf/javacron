@@ -397,6 +397,11 @@ public class CronFieldParserTest {
         Schedule.create("* * * 31 2,4,6,9,11 *");
     }
 
+    @Test(expected = InvalidExpressionException.class)
+    public void testInvalidSchedule() throws InvalidExpressionException {
+        Schedule.create("0 0 0 l * 5L");
+    }
+
     @Test
     public void testReachableSchedule1() throws InvalidExpressionException {
         Schedule.create("0 0 30 1 *");
