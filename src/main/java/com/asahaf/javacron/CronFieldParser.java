@@ -150,6 +150,10 @@ class CronFieldParser {
             if (token.length() == 2 && token.endsWith("l")) {
                 return this.parseLiteral(token.substring(0, 1));
             }
+        } else if (this.fieldType == CronFieldType.DAY) {
+            if ("l".equals(token)) {
+                return this.parseLastDayOfMonth();
+            }
         }
         if (token.indexOf(",") > -1) {
             BitSet bitSet = new BitSet(this.length);
@@ -255,6 +259,17 @@ class CronFieldParser {
         BitSet bitSet = new BitSet(this.length);
         bitSet.set(0, this.length);
         return bitSet;
+    }
+
+    public BitSet parseLastDayOfMonth() throws InvalidExpressionException {
+        if (this.fieldType == CronFieldType.DAY) {
+            BitSet bitSet = new BitSet(this.length);
+            for (int i = 27; i <= length; i++) {
+                bitSet.set(i);
+            }
+            return bitSet;
+        }
+        throw new InvalidExpressionException("Last day of month is only allowed in day field");
     }
 
     private BitSet parseLiteral(String token) throws InvalidExpressionException {

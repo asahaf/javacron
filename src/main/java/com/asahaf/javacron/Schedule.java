@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
  *
  * <p>
  * The schedule class cannot be instantiated using a constructor, a Schedule
- * object can be obtain by using the static {@link create} method, which parses
+ * object can be obtain by using the static {@link #create} method, which parses
  * a crontab expression and creates a Schedule object.
  *
  * @author Ahmed AlSahaf
@@ -42,6 +42,7 @@ public class Schedule implements Comparable<Schedule> {
     private BitSet months;
     private BitSet daysOfWeek;
     private BitSet daysOf5Weeks;
+    private boolean isLastDayOfMonth;
     private boolean isSpecificLastDayOfMonth;
 
     /**
@@ -53,7 +54,7 @@ public class Schedule implements Comparable<Schedule> {
      * <pre>
      *  ┌───────────── minute (0 - 59)
      *  │ ┌───────────── hour (0 - 23)
-     *  │ │ ┌───────────── day of the month (1 - 31)
+     *  │ │ ┌───────────── day of the month (1 - 31) or L for last day of the month
      *  │ │ │ ┌───────────── month (1 - 12 or Jan/January - Dec/December)
      *  │ │ │ │ ┌───────────── day of the week (0 - 6 or Sun/Sunday - Sat/Saturday)
      *  │ │ │ │ │
@@ -68,7 +69,7 @@ public class Schedule implements Comparable<Schedule> {
      *  ┌───────────── second (0 - 59)
      *  │ ┌───────────── minute (0 - 59)
      *  │ │ ┌───────────── hour (0 - 23)
-     *  │ │ │ ┌───────────── day of the month (1 - 31)
+     *  │ │ │ ┌───────────── day of the month (1 - 31) or L for last day of the month
      *  │ │ │ │ ┌───────────── month (1 - 12 or Jan/January - Dec/December)
      *  │ │ │ │ │ ┌───────────── day of the week (0 - 6 or Sun/Sunday - Sat/Saturday)
      *  │ │ │ │ │ │
@@ -120,6 +121,7 @@ public class Schedule implements Comparable<Schedule> {
 
         String daysToken = fields[index++];
         schedule.days = Schedule.DAYS_FIELD_PARSER.parse(daysToken);
+        schedule.isLastDayOfMonth = "l".equals(daysToken);
         boolean daysStartWithAsterisk = false;
         if (daysToken.startsWith("*"))
             daysStartWithAsterisk = true;
@@ -437,8 +439,11 @@ public class Schedule implements Comparable<Schedule> {
             updatedDays.set(j, false);
         }
 
-        // remove days before the last 7 days
-        if (schedule.isSpecificLastDayOfMonth) {
+        if (isLastDayOfMonth) {
+            for (int j = 0; j < monthDaysCount; j++) { // remove all days except last day of month
+                updatedDays.set(j, ((j + 1) == monthDaysCount));
+            }
+        } else if (schedule.isSpecificLastDayOfMonth) { // remove days before the last 7 days
             for (int j = 0; j < monthDaysCount - 7; j++) {
                 updatedDays.set(j, false);
             }
